@@ -2,16 +2,14 @@
 A tool for auto renaming and distributing macros for easier modding
 
 Instructions:
+Extract INI.big from BFME2 / BFME RotWK.
 
-Extract the INI.big from BFME2 / BFME RotWK.
-
-Open the program and select the directory where you extracted the 
+Open this program and select the directory where you extracted the 
 files. The program won't run unless it can find the gamedata.ini.
 The program will log every step.
 
 
 What it does:
-
 Renames all macros with a prefix of M_, and places the newly editable macros inside _gamedata.inc
 Moves the gamedata block outside of gamedata.ini and inside /object/gamedata.ini
 Takes care of /default/water.ini to include _gamedata.inc.
