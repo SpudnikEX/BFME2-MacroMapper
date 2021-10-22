@@ -22,20 +22,25 @@ namespace BFME2_Macro_Mapper
         StringBuilder builder;
         StringBuilder builderPath;
         string gamedataPath = "gamedata.ini";
-        string inputPath;
         DirectoryInfo currentDirectory;
 
         public string selectedDirectory;
 
         public string[] files;
         public string directory;
+        /// <summary>Holds lines for "#define MACRO #"</summary>
         public List<string> defines = new List<string>();
+        /// <summary>Holds lines for "#define M_MACRO #"</summary>
         public List<string> m_defines = new List<string>();
+        /// <summary>Holds unedited MACRO</summary>
         public List<string> macros = new List<string>();
+        /// <summary>Holds edited M_MACRO</summary>
         public List<string> m_macros = new List<string>();
 
         /// <summary>Text parsed from gamedata.ini</summary>
         string[] gamedataText;
+        /// <summary>Edited text parsed from gamedata.ini, including M_</summary>
+        string[] m_gamedataText;
         int defineIndexStart = 0;
         int defineIndexEnd = 0;
 
@@ -54,7 +59,6 @@ namespace BFME2_Macro_Mapper
 
             textBoxOutput.Text = Path.Combine(Directory.GetCurrentDirectory(), "data", "ini");
 
-
         }
 
         void Run()
@@ -66,9 +70,16 @@ namespace BFME2_Macro_Mapper
             LoadMacros();
             ReplaceMacros();
 
-
+            CreateShotcutFile();
             MessageBox.Show("Process Complete");
             Application.Exit();
+        }
+
+        void CreateShotcutFile()
+        {
+            string shortcut = String.Format("-mod \"{0}\"", Directory.GetCurrentDirectory());
+            File.WriteAllText(Path.Combine(textBoxOutput.Text,"_shortcut.txt"), shortcut);
+            Console.WriteLine("Creating shortcut file");
         }
 
         void GetWorkingDirectory()
@@ -84,7 +95,7 @@ namespace BFME2_Macro_Mapper
 
             for (int i = 0; i < files.Length; i++)
             {
-                Console.WriteLine(files[i]);
+                Console.WriteLine("Files found: " + files[i]);
             }
         }
 
@@ -93,6 +104,7 @@ namespace BFME2_Macro_Mapper
             if (File.Exists(Path.Combine(currentDirectory.FullName, gamedataPath)))
             {
                 gamedataText = File.ReadAllLines(Path.Combine(currentDirectory.FullName, gamedataPath));
+                m_gamedataText = new string[gamedataText.Length]; // Allocate new string
                 Console.WriteLine("Gamedata.ini found, ready to begin");
                 return true;
             }
@@ -108,13 +120,19 @@ namespace BFME2_Macro_Mapper
             {
                 if (gamedataText[i].StartsWith("#define"))
                 {
-                    if (defineIndexStart == 0) defineIndexStart = i; // Get beginning index for copying
+                    if (defineIndexStart == 0) defineIndexStart = i; // Get beginning index for copying macros / defines
                     defines.Add(gamedataText[i]);
                     m_defines.Add(gamedataText[i].Insert(8, "M_"));
+                    m_gamedataText[i] = gamedataText[i].Insert(8, "M_");
                 }
+                else
+                {
+                    m_gamedataText[i] = gamedataText[i]; // Copy text
+                }
+
                 if(gamedataText[i].Contains("GAME DATA"))
                 {
-                    defineIndexEnd = i; // get ending index for copying
+                    defineIndexEnd = i; // get ending index for copying macros / defines
                 }
             }
 
@@ -226,6 +244,7 @@ namespace BFME2_Macro_Mapper
                             //builder.Insert(j - 1, "  PlayIntro = " + (checkBoxNoIntro.Checked ? "Yes" : "No"));
                             builder.AppendLine("  PlayIntro = " + (checkBoxPlayIntro.Checked ? "Yes" : "No"));
                         }
+                        Console.WriteLine("Writing " + gamedataText[j]);
                     }
 
                     // Create gamedata.ini in root
@@ -236,8 +255,16 @@ namespace BFME2_Macro_Mapper
                     // Put defines block in "_gamedata.inc"
                     for (int j = defineIndexStart; j < defineIndexEnd; j++)
                     {
-                        builder.AppendLine(gamedataText[j]);
+                        builder.AppendLine(m_gamedataText[j]);
+                        Console.WriteLine("Writing " + m_gamedataText[j]);
                     }
+
+                    //// Replace defines in "_gamedata.inc"
+                    //for (int j = 0; j < m_defines.Count; j++)
+                    //{
+                    //    builder.Replace(macros[j], m_macros[j]);
+                    //    Console.WriteLine("Replacing " + macros[j]);
+                    //}
 
                     // Create _gamedata.inc in objects/gamedata
                     File.WriteAllText(Path.Combine(textBoxOutput.Text, "_gamedata.inc"), builder.ToString()); // Output directory to gamedata.ini
