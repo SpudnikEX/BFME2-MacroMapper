@@ -1,0 +1,15 @@
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\bin\Debug\BFME2 Macro Mapper.exe.config
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\bin\Debug\BFME2 Macro Mapper.exe
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\bin\Debug\BFME2 Macro Mapper.pdb
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\obj\Debug\BFME2 Macro Mapper.csprojAssemblyReference.cache
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\obj\Debug\BFME2_Macro_Mapper.Form1.resources
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\obj\Debug\BFME2_Macro_Mapper.Properties.Resources.resources
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\obj\Debug\BFME2 Macro Mapper.csproj.GenerateResource.cache
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\obj\Debug\BFME2 Macro Mapper.csproj.CoreCompileInputs.cache
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\obj\Debug\BFME2 Macro Mapper.exe
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\obj\Debug\BFME2 Macro Mapper.pdb
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\bin\Debug\Microsoft.WindowsAPICodePack.dll
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\bin\Debug\Microsoft.WindowsAPICodePack.Shell.dll
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\bin\Debug\Microsoft.WindowsAPICodePack.xml
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\bin\Debug\Microsoft.WindowsAPICodePack.Shell.xml
+G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\obj\Debug\BFME2 Macro Mapper.csproj.CopyComplete
