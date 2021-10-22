@@ -161,7 +161,6 @@ namespace BFME2_Macro_Mapper
             // Replace in all files
             for (int i = 0; i < files.Length; i++)
             {
-                Console.WriteLine(files[i]);
                 if (files[i].Contains("gamedata.ini"))
                 {
                     // Create new file for /default/gamedata.ini & _gamedata.inc
@@ -209,21 +208,40 @@ namespace BFME2_Macro_Mapper
                 builder.Clear();
                 builderPath.Clear();
 
-                for (int j = defineIndexStart; j < defineIndexEnd; j++)
-                {
-                    builder.AppendLine(gamedataText[j]);
-                }
-                // create gamedata.ini in objects/gamedata
-                File.WriteAllText(Path.Combine(textBoxOutput.Text, "_gamedata.inc"), builder.ToString()); // Output directory to gamedata.ini
+                INC();
 
                 builder.Clear();
                 builderPath.Clear();
-                for (int j = defineIndexEnd; j < gamedataText.Length; j++)
+
+                INI();
+
+                void INI()
                 {
-                    builder.AppendLine(gamedataText[j]);
+                    // Put Gamedata block into "object/gamedata.ini"
+                    for (int j = defineIndexEnd; j < gamedataText.Length; j++)
+                    {
+                        builder.AppendLine(gamedataText[j]);
+                        if (gamedataText[j].Contains("  WaterType = 0"))
+                        {
+                            //builder.Insert(j - 1, "  PlayIntro = " + (checkBoxNoIntro.Checked ? "Yes" : "No"));
+                            builder.AppendLine("  PlayIntro = " + (checkBoxPlayIntro.Checked ? "Yes" : "No"));
+                        }
+                    }
+
+                    // Create gamedata.ini in root
+                    File.WriteAllText(Path.Combine(textBoxOutput.Text, "object", "gamedata.ini"), builder.ToString()); // Output directory to gamedata.ini
                 }
-                File.WriteAllText(Path.Combine(textBoxOutput.Text, "object", "gamedata.ini"), builder.ToString()); // Output directory to gamedata.ini
-                // create _gamedata.inc in root
+                void INC()
+                {
+                    // Put defines block in "_gamedata.inc"
+                    for (int j = defineIndexStart; j < defineIndexEnd; j++)
+                    {
+                        builder.AppendLine(gamedataText[j]);
+                    }
+
+                    // Create _gamedata.inc in objects/gamedata
+                    File.WriteAllText(Path.Combine(textBoxOutput.Text, "_gamedata.inc"), builder.ToString()); // Output directory to gamedata.ini
+                }
             }
 
             void AppendWater(int i)
