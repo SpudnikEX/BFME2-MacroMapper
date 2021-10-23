@@ -26,6 +26,7 @@ namespace BFME2_Macro_Mapper
 
         public string selectedDirectory;
 
+        /// <summary>All files and subfiles found within the directory</summary>
         public string[] files;
         public string directory;
         /// <summary>Holds lines for "#define MACRO #"</summary>
@@ -38,11 +39,14 @@ namespace BFME2_Macro_Mapper
         public List<string> m_macros = new List<string>();
 
         /// <summary>Text parsed from gamedata.ini</summary>
-        string[] gamedataText;
+        List<string> gamedataText = new List<string>();
         /// <summary>Edited text parsed from gamedata.ini, including M_</summary>
-        string[] m_gamedataText;
+        List<string> m_gamedataText = new List<string>();
         int defineIndexStart = 0;
         int defineIndexEnd = 0;
+
+        ProgressBar progressBar = new ProgressBar();
+        int startTime = 0;
 
         public Form1()
         {
@@ -63,6 +67,7 @@ namespace BFME2_Macro_Mapper
 
         void Run()
         {
+            timer.Start();
             //GetWorkingDirectory();
 
             //folders = currentDirectory.GetDirectories();
@@ -71,7 +76,9 @@ namespace BFME2_Macro_Mapper
             ReplaceMacros();
 
             CreateShotcutFile();
-            MessageBox.Show("Process Complete");
+
+            MessageBox.Show("Process Complete. Total Time: " + TimeSpan.FromMilliseconds(Environment.TickCount - startTime).ToString());
+            timer.Stop();
             Application.Exit();
         }
 
@@ -103,8 +110,23 @@ namespace BFME2_Macro_Mapper
         {
             if (File.Exists(Path.Combine(currentDirectory.FullName, gamedataPath)))
             {
-                gamedataText = File.ReadAllLines(Path.Combine(currentDirectory.FullName, gamedataPath));
-                m_gamedataText = new string[gamedataText.Length]; // Allocate new string
+                List<int> indexes = new List<int>();
+                gamedataText.AddRange(File.ReadAllLines(Path.Combine(currentDirectory.FullName, gamedataPath)));
+                for (int i = 0; i < gamedataText.Count; i++)
+                {
+                    if (gamedataText[i].StartsWith("#include"))
+                    {
+                        indexes.Add(i);
+                    }
+                    Console.WriteLine("Macro found: " + gamedataText[i]);
+                }
+                for (int i = 0; i < indexes.Count; i++)
+                {
+                    string sub = gamedataText[indexes[i]].Substring(9); // Get path from #include
+                    gamedataText.RemoveAt(indexes[i]); // Remove #include from gamedata.ini
+                    gamedataText.InsertRange(indexes[i], File.ReadAllLines(Path.Combine(currentDirectory.FullName, sub.Replace("\"", string.Empty))).Skip(3)); // Insert read file into gamedata.ini, skip header
+                }
+
                 Console.WriteLine("Gamedata.ini found, ready to begin");
                 return true;
             }
@@ -114,20 +136,22 @@ namespace BFME2_Macro_Mapper
         }
 
         void LoadMacros()
-        { 
+        {
+            m_gamedataText = new List<string>(gamedataText.Count); // Allocate new string for edited gamedataText
+
             // Seperate #defines into array
-            for (int i = 0; i < gamedataText.Length; i++)
+            for (int i = 0; i < gamedataText.Count; i++)
             {
                 if (gamedataText[i].StartsWith("#define"))
                 {
                     if (defineIndexStart == 0) defineIndexStart = i; // Get beginning index for copying macros / defines
                     defines.Add(gamedataText[i]);
                     m_defines.Add(gamedataText[i].Insert(8, "M_"));
-                    m_gamedataText[i] = gamedataText[i].Insert(8, "M_");
+                    m_gamedataText.Insert(i,gamedataText[i].Insert(8, "M_"));
                 }
                 else
                 {
-                    m_gamedataText[i] = gamedataText[i]; // Copy text
+                    m_gamedataText.Insert(i,gamedataText[i]); // Copy text
                 }
 
                 if(gamedataText[i].Contains("GAME DATA"))
@@ -152,18 +176,24 @@ namespace BFME2_Macro_Mapper
 
                 // Add macros to lists
                 macros.Add(str);
-                m_macros.Add(str.Insert(0, "M_"));
+                m_macros.Add("M_" + str); //"M_" + 
+
 
                 Console.WriteLine(macros[i] + " | TO | " + m_macros[i]);
+                builder.AppendLine(i.ToString() + " " + macros[i] + " | TO | " + m_macros[i]);
             }
+            File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(),"Log.txt"), builder.ToString());
         }
 
 
         void ReplaceMacros()
         {
+            builder.Clear();
             // Search files in base (later further folders) to see if any strings contain any of the default macros, then replace with same index of m_defines
-            string str = "";
-            string subFile = "";
+            string source = "";
+            int searchIndex = 0;
+            int oldIndex = 0;
+            int count = 0, n = 0;
 
             if (!Directory.Exists(textBoxOutput.Text)) Directory.CreateDirectory(textBoxOutput.Text);
 
@@ -202,23 +232,64 @@ namespace BFME2_Macro_Mapper
                 builder.Clear();
                 builderPath.Clear();
 
-                builder.Append(File.ReadAllText(files[i]));
-                for (int j = 0; j < macros.Count; j++)
-                {
-                    if (str.Contains(macros[j]))
-                    {
-                        builder.Replace(macros[j], m_macros[j]);
-                        //str = str.Replace(macros[j], m_macros[j]);
+                Console.Write("Searching: ");
+                source = File.ReadAllText(files[i]);
+                builder.EnsureCapacity(source.Length);
+                builder.Append(source);
 
-                        Console.WriteLine("Replacing " + macros[j] + " > " + m_macros[j]);
-                        //Thread.Sleep(500);
+                searchIndex = 0;
+                oldIndex = 0;
+                count = n = 0;
+                using (var progress = new ProgressBar())
+                {
+                    for (int j = 0; j < macros.Count; j++)
+                    {
+                        progress.Report((double)j / (double)macros.Count);
+                        // add in contains
+                        if (!source.Contains(macros[j])) continue;
+
+                        builder.Replace(macros[j], m_macros[j]);
+
+                        //count = n = 0;
+                        //while ((n = source.IndexOf(macros[j], n, StringComparison.InvariantCulture)) != -1)//!= -1)
+                        //{
+                        //    builder.Insert(n + (2*count), "M_");
+                        //    builder.
+                        //    n += macros[j].Length; // for M_
+                        //    count++;
+                        //}
+                        
                     }
+                    //Second Pass, remove duplicates (not sure why they appear)
+                    builder.Replace("M_M_", "M_");
                 }
 
+                //using (var progress = new ProgressBar())
+                //{
+
+                //        //builder.Replace(macros[j], m_macros[j]);
+
+
+                //        //if (str.Contains(macros[j]))
+                //        //{
+                //        //    searchIndex = str.IndexOf(macros[j], oldIndex);
+
+                //        //    oldIndex = searchIndex;
+                //        //}
+                //        oldIndex = 0;
+                //        //builder.Replace(macros[j], "M_" + macros[j]);
+                //        progress.Report((double)j / (double)macros.Count);
+                //        //Thread.Sleep(500);
+                //    }
+                //}
+
+                // Eliminate M_M_'s (Don't know why they appear)
+                //builder.Replace("M_M_", "M_");
+
+                Console.WriteLine("Done");
                 builderPath.Append(files[i]);
                 File.WriteAllText(builderPath.Replace(textBoxInput.Text, textBoxOutput.Text).ToString(), builder.ToString());
                 Console.WriteLine("Creating " + builderPath.ToString());
-                Console.WriteLine("Closing " + files[i]);
             }
 
             void CreateGameData(int i)
@@ -236,7 +307,7 @@ namespace BFME2_Macro_Mapper
                 void INI()
                 {
                     // Put Gamedata block into "object/gamedata.ini"
-                    for (int j = defineIndexEnd; j < gamedataText.Length; j++)
+                    for (int j = defineIndexEnd; j < gamedataText.Count; j++)
                     {
                         builder.AppendLine(gamedataText[j]);
                         if (gamedataText[j].Contains("  WaterType = 0"))
@@ -293,6 +364,7 @@ namespace BFME2_Macro_Mapper
         {
             textBoxInput.Enabled = false;
             textBoxOutput.Enabled = false;
+            startTime = Environment.TickCount;
             Run();
         }
 
@@ -318,6 +390,11 @@ namespace BFME2_Macro_Mapper
         {
             if(dialog.ShowDialog() == CommonFileDialogResult.Ok)
                 textBoxOutput.Text = dialog.FileName;
+        }
+
+        private void timer_Tick(object sender, EventArgs e)
+        {
+            //elapsedTime++;
         }
     }
 }

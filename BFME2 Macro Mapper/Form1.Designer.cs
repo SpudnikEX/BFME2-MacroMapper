@@ -29,6 +29,7 @@ namespace BFME2_Macro_Mapper
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.buttonStart = new System.Windows.Forms.Button();
             this.textBoxInput = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -39,6 +40,7 @@ namespace BFME2_Macro_Mapper
             this.buttonSelectOutput = new System.Windows.Forms.Button();
             this.checkBoxPlayIntro = new System.Windows.Forms.CheckBox();
             this.labelInfo = new System.Windows.Forms.Label();
+            this.timer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // buttonStart
@@ -127,6 +129,11 @@ namespace BFME2_Macro_Mapper
     " _gamedata.inc\r\n   /object/gamedata.ini\r\nCreate a shortcut when done and point t" +
     "o the gamedata folder\r\n";
             // 
+            // timer
+            // 
+            this.timer.Interval = 1000;
+            this.timer.Tick += new System.EventHandler(this.timer_Tick);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -163,6 +170,7 @@ namespace BFME2_Macro_Mapper
         private System.Windows.Forms.Button buttonSelectOutput;
         private System.Windows.Forms.CheckBox checkBoxPlayIntro;
         private System.Windows.Forms.Label labelInfo;
+        private System.Windows.Forms.Timer timer;
     }
 }
 

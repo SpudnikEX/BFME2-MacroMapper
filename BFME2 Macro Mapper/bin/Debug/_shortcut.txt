@@ -1,0 +1,1 @@
+-mod "G:\Github\repos\BFME2-MacroMapper\BFME2 Macro Mapper\bin\Debug"
