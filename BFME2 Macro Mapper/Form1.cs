@@ -175,10 +175,14 @@ namespace BFME2_Macro_Mapper
                 str = str.Substring(0, index); // Remove any text after macro
 
                 // Add macros to lists
-                macros.Add(str);
-                m_macros.Add("M_" + str); //"M_" + 
+                //macros.Add(str);
+                m_macros.Insert(macros.InsertSortedString(str),"M_" + str);
+                //m_macros.Add("M_" + str); //"M_" + 
 
-
+                //Sort lists by longest first
+            }
+            for (int i = 0; i < macros.Count; i++)
+            {
                 Console.WriteLine(macros[i] + " | TO | " + m_macros[i]);
                 builder.AppendLine(i.ToString() + " " + macros[i] + " | TO | " + m_macros[i]);
             }
@@ -190,10 +194,12 @@ namespace BFME2_Macro_Mapper
         {
             builder.Clear();
             // Search files in base (later further folders) to see if any strings contain any of the default macros, then replace with same index of m_defines
-            string source = "";
+            //string source = "";
             int searchIndex = 0;
             int oldIndex = 0;
             int count = 0, n = 0;
+            string[] sourceLine;
+            string source;
 
             if (!Directory.Exists(textBoxOutput.Text)) Directory.CreateDirectory(textBoxOutput.Text);
 
@@ -231,66 +237,162 @@ namespace BFME2_Macro_Mapper
 
                 builder.Clear();
                 builderPath.Clear();
+                builderPath.Append(files[i]); // Get path to file
 
-                Console.Write("Searching: ");
-                source = File.ReadAllText(files[i]);
-                builder.EnsureCapacity(source.Length);
-                builder.Append(source);
+                MethodA();
 
-                searchIndex = 0;
-                oldIndex = 0;
-                count = n = 0;
-                using (var progress = new ProgressBar())
+                void MethodA() // Rougly 17 mins
                 {
-                    for (int j = 0; j < macros.Count; j++)
+                    using (var progress = new ProgressBar())
                     {
-                        progress.Report((double)j / (double)macros.Count);
-                        // add in contains
-                        if (!source.Contains(macros[j])) continue;
-
-                        builder.Replace(macros[j], m_macros[j]);
-
-                        //count = n = 0;
-                        //while ((n = source.IndexOf(macros[j], n, StringComparison.InvariantCulture)) != -1)//!= -1)
-                        //{
-                        //    builder.Insert(n + (2*count), "M_");
-                        //    builder.
-                        //    n += macros[j].Length; // for M_
-                        //    count++;
-                        //}
-                        
+                        sourceLine = File.ReadAllLines(files[i]);
+                        Console.Write("Searching: " + sourceLine.Length + " Lines");
+                        for (int j = 0; j < sourceLine.Length; j++)
+                        {
+                            progress.Report((double)j / (double)sourceLine.Length);
+                            // Iterate through each line, check for macros
+                            for (int m = 0; m < macros.Count; m++)
+                            {
+                                // Check line for macro
+                                if (sourceLine[j].Contains(macros[m]))
+                                {
+                                    // append a replace
+                                    builder.AppendLine(sourceLine[j].Insert(sourceLine[j].IndexOf(macros[m]), "M_" + macros[m]));
+                                    //builder.AppendLine(sourceLine[j].Replace(macros[m], m_macros[m]));
+                                    break; // Move to next line
+                                }
+                                else if(m == macros.Count-1) // If end of the macros search
+                                {
+                                    builder.AppendLine(sourceLine[j]);
+                                }
+                            }
+                        }
                     }
-                    //Second Pass, remove duplicates (not sure why they appear)
-                    builder.Replace("M_M_", "M_");
+
+                    Console.WriteLine("Done");
+                    File.WriteAllText(builderPath.Replace(textBoxInput.Text, textBoxOutput.Text).ToString(), builder.ToString());
+                    Console.WriteLine("Creating " + builderPath.ToString());
+                    return;
+
+                    // write all lines
+                    // OLD METHODS ************************************************************************************************
+                    searchIndex = 0;
+                    oldIndex = 0;
+                    count = n = 0;
+                    using (var progress = new ProgressBar())
+                    {
+                        for (int j = 0; j < macros.Count; j++)
+                        {
+                            progress.Report((double)j / (double)macros.Count);
+                            // add in contains
+                            if (!source.Contains(macros[j])) continue;
+
+                            builder.Replace(macros[j], m_macros[j]);
+
+                            //count = n = 0;
+                            //while ((n = source.IndexOf(macros[j], n, StringComparison.InvariantCulture)) != -1)//!= -1)
+                            //{
+                            //    builder.Insert(n + (2*count), "M_");
+                            //    builder.
+                            //    n += macros[j].Length; // for M_
+                            //    count++;
+                            //}
+
+                        }
+                        //Second Pass, remove duplicates (not sure why they appear)
+                        builder.Replace("M_M_", "M_");
+                    }
+
+                    //using (var progress = new ProgressBar())
+                    //{
+
+                    //        //builder.Replace(macros[j], m_macros[j]);
+
+
+                    //        //if (str.Contains(macros[j]))
+                    //        //{
+                    //        //    searchIndex = str.IndexOf(macros[j], oldIndex);
+
+                    //        //    oldIndex = searchIndex;
+                    //        //}
+                    //        oldIndex = 0;
+                    //        //builder.Replace(macros[j], "M_" + macros[j]);
+                    //        progress.Report((double)j / (double)macros.Count);
+                    //        //Thread.Sleep(500);
+                    //    }
+                    //}
+
+                    // Eliminate M_M_'s (Don't know why they appear)
+                    //builder.Replace("M_M_", "M_");
+
+
+
+                    //Console.WriteLine("Done");
+                    //builderPath.Append(files[i]);
+                    //File.WriteAllText(builderPath.Replace(textBoxInput.Text, textBoxOutput.Text).ToString(), builder.ToString());
+                    //Console.WriteLine("Creating " + builderPath.ToString());
+
+                    // *******************************************************************************************************************************************************
                 }
 
-                //using (var progress = new ProgressBar())
-                //{
+                void MethodB() // Roughly 17 Mins
+                {
+                    double fileSize = new FileInfo(files[i]).Length;
 
-                //        //builder.Replace(macros[j], m_macros[j]);
+                    using (FileStream fs = File.OpenRead(files[i])) // Read from file path
+                    using (BufferedStream bs = new BufferedStream(fs))
+                    using (StreamReader sr = new StreamReader(bs))
+                    using (StreamWriter sw = new StreamWriter(builderPath.Replace(textBoxInput.Text, textBoxOutput.Text).ToString(), false, Encoding.UTF8, 65536))
+                    using (ProgressBar progress = new ProgressBar())
+                    {
+                        double bytesProcessed = 0;
+                        while ((source = sr.ReadLine()) != null)
+                        {
+                            bytesProcessed += Encoding.UTF8.GetByteCount(source);
+                            progress.Report((double)bytesProcessed / (double)fileSize);
+
+                            for (int j = 0; j < macros.Count; j++)
+                            {
+                                if (source.Contains(macros[j]))
+                                {
+                                    builder.Replace(macros[j], m_macros[j]);
+                                    //builder.AppendLine(source.Replace(macros[j], m_macros[j]));
+                                    //builder.AppendLine(source.Insert(source.IndexOf(macros[j],StringComparison.Ordinal), "M_")); //source.Replace(macros[j], m_macros[j]));
+                                    //sw.WriteLine();
+                                    break; // Macro for line found
+                                }
+                                //else
+                                //{
+                                //    if(j == macros.Count - 1)
+                                //    {
+                                //        // Write line if no macro found and on last macro
+
+                                //        //sw.WriteLine(source);
+                                //    }
+
+                                //    //builder.AppendLine(source);
+                                //    //builder.Replace(macros[j], m_macros[j]);
+
+                                //    //builder.Clear();
+                                //    // Replace and write line
+                                //}
+                                //progress.Report((double)j / (double)macros.Count);
+                            }
+                        }
+                        sw.Write(builder.ToString());
+                    }
+                    //sw.Close();
+                    //sr.Close();
+                    Console.Write(" Done");
+                    Console.WriteLine("");
+                    Console.WriteLine("Creating " + builderPath.ToString());
+                    Console.WriteLine("");
+                }
 
 
-                //        //if (str.Contains(macros[j]))
-                //        //{
-                //        //    searchIndex = str.IndexOf(macros[j], oldIndex);
-
-                //        //    oldIndex = searchIndex;
-                //        //}
-                //        oldIndex = 0;
-                //        //builder.Replace(macros[j], "M_" + macros[j]);
-                //        progress.Report((double)j / (double)macros.Count);
-                //        //Thread.Sleep(500);
-                //    }
-                //}
-
-                // Eliminate M_M_'s (Don't know why they appear)
-                //builder.Replace("M_M_", "M_");
-
-                Console.WriteLine("Done");
-                builderPath.Append(files[i]);
-                File.WriteAllText(builderPath.Replace(textBoxInput.Text, textBoxOutput.Text).ToString(), builder.ToString());
-                Console.WriteLine("Creating " + builderPath.ToString());
             }
+
+            #region FileSpecific
 
             void CreateGameData(int i)
             {
@@ -356,10 +458,11 @@ namespace BFME2_Macro_Mapper
                 builderPath.Append(files[i]);
                 File.WriteAllText(builderPath.Replace(textBoxInput.Text, textBoxOutput.Text).ToString(), builder.ToString());
             }
+            #endregion
         }
 
-       
 
+        #region UI IO
         private void buttonStart_Click(object sender, EventArgs e)
         {
             textBoxInput.Enabled = false;
@@ -396,5 +499,32 @@ namespace BFME2_Macro_Mapper
         {
             //elapsedTime++;
         }
+        #endregion
     }
+}
+
+public static class Extensions
+{
+    public static int InsertSortedString(this List<string> source, string element)
+    {
+        int index = source.FindLastIndex(e => e.Length > element.Length);
+        if (index == 0 || index == -1)
+        {
+            source.Insert(0, element);
+            return 0;
+        }
+        source.Insert(index + 1, element);
+        return index + 1;
+    }
+    static void InsertSorted<T>(this IList<T> list, T item) where T : IComparable<T>
+    {
+        list.Add(item);
+        var i = list.Count - 1;
+        for (; i > 0 && list[i - 1].CompareTo(item) < 0; i--)
+        {
+            list[i] = list[i - 1];
+        }
+        list[i] = item;
+    }
+
 }
