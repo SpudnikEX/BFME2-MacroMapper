@@ -67,7 +67,6 @@ namespace BFME2_Macro_Mapper
 
         void Run()
         {
-            timer.Start();
             //GetWorkingDirectory();
 
             //folders = currentDirectory.GetDirectories();
@@ -78,7 +77,6 @@ namespace BFME2_Macro_Mapper
             CreateShotcutFile();
 
             MessageBox.Show("Process Complete. Total Time: " + TimeSpan.FromMilliseconds(Environment.TickCount - startTime).ToString());
-            timer.Stop();
             Application.Exit();
         }
 
