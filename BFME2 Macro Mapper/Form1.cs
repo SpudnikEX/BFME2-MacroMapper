@@ -45,7 +45,7 @@ namespace BFME2_Macro_Mapper
         int defineIndexStart = 0;
         int defineIndexEnd = 0;
 
-        ProgressBar progressBar = new ProgressBar();
+        int fileCount;
         int startTime = 0;
 
         public Form1()
@@ -69,8 +69,6 @@ namespace BFME2_Macro_Mapper
         {
             //GetWorkingDirectory();
 
-            //folders = currentDirectory.GetDirectories();
-
             LoadMacros();
             ReplaceMacros();
 
@@ -89,13 +87,8 @@ namespace BFME2_Macro_Mapper
 
         void GetWorkingDirectory()
         {
-            //selectedDirectory = Directory.GetCurrentDirectory();
-            //folderBrowserDialog.SelectedPath = selectedDirectory; // check in data if this needs to be called
-            //folderBrowserDialog.ShowDialog();
-            //selectedDirectory = folderBrowserDialog.SelectedPath;
-
             currentDirectory = new DirectoryInfo(textBoxInput.Text);
-            //subDirectories = Directory.GetDirectories(currentDirectory.FullName, "*", SearchOption.AllDirectories);
+   
             files = Directory.GetFiles(currentDirectory.FullName, "*", SearchOption.AllDirectories);
 
             for (int i = 0; i < files.Length; i++)
@@ -213,6 +206,8 @@ namespace BFME2_Macro_Mapper
             // Replace in all files
             for (int i = 0; i < files.Length; i++)
             {
+                fileCount++;
+
                 if (files[i].Contains("gamedata.ini"))
                 {
                     // Create new file for /default/gamedata.ini & _gamedata.inc
@@ -231,6 +226,8 @@ namespace BFME2_Macro_Mapper
                     AppendWater(i);
                     continue;
                 }
+
+                Console.WriteLine(); // New Space
                 Console.WriteLine("Opening " + files[i]);
 
                 builder.Clear();
@@ -244,7 +241,7 @@ namespace BFME2_Macro_Mapper
                     using (var progress = new ProgressBar())
                     {
                         sourceLine = File.ReadAllLines(files[i]);
-                        Console.Write("Searching: " + sourceLine.Length + " Lines");
+                        Console.Write("Searching: "+ " File " + fileCount.ToString() + " of " + files.Length.ToString() + " | "  + sourceLine.Length + " Lines ");
                         for (int j = 0; j < sourceLine.Length; j++)
                         {
                             progress.Report((double)j / (double)sourceLine.Length);
@@ -286,50 +283,10 @@ namespace BFME2_Macro_Mapper
                             if (!source.Contains(macros[j])) continue;
 
                             builder.Replace(macros[j], m_macros[j]);
-
-                            //count = n = 0;
-                            //while ((n = source.IndexOf(macros[j], n, StringComparison.InvariantCulture)) != -1)//!= -1)
-                            //{
-                            //    builder.Insert(n + (2*count), "M_");
-                            //    builder.
-                            //    n += macros[j].Length; // for M_
-                            //    count++;
-                            //}
-
                         }
                         //Second Pass, remove duplicates (not sure why they appear)
                         builder.Replace("M_M_", "M_");
                     }
-
-                    //using (var progress = new ProgressBar())
-                    //{
-
-                    //        //builder.Replace(macros[j], m_macros[j]);
-
-
-                    //        //if (str.Contains(macros[j]))
-                    //        //{
-                    //        //    searchIndex = str.IndexOf(macros[j], oldIndex);
-
-                    //        //    oldIndex = searchIndex;
-                    //        //}
-                    //        oldIndex = 0;
-                    //        //builder.Replace(macros[j], "M_" + macros[j]);
-                    //        progress.Report((double)j / (double)macros.Count);
-                    //        //Thread.Sleep(500);
-                    //    }
-                    //}
-
-                    // Eliminate M_M_'s (Don't know why they appear)
-                    //builder.Replace("M_M_", "M_");
-
-
-
-                    //Console.WriteLine("Done");
-                    //builderPath.Append(files[i]);
-                    //File.WriteAllText(builderPath.Replace(textBoxInput.Text, textBoxOutput.Text).ToString(), builder.ToString());
-                    //Console.WriteLine("Creating " + builderPath.ToString());
-
                     // *******************************************************************************************************************************************************
                 }
 
@@ -359,22 +316,6 @@ namespace BFME2_Macro_Mapper
                                     //sw.WriteLine();
                                     break; // Macro for line found
                                 }
-                                //else
-                                //{
-                                //    if(j == macros.Count - 1)
-                                //    {
-                                //        // Write line if no macro found and on last macro
-
-                                //        //sw.WriteLine(source);
-                                //    }
-
-                                //    //builder.AppendLine(source);
-                                //    //builder.Replace(macros[j], m_macros[j]);
-
-                                //    //builder.Clear();
-                                //    // Replace and write line
-                                //}
-                                //progress.Report((double)j / (double)macros.Count);
                             }
                         }
                         sw.Write(builder.ToString());
